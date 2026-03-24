@@ -1,0 +1,35 @@
+# .gitignore para projetos Python
+# Ignora ambientes virtuais
+venv/
+
+# Ignora arquivos de cache do Python
+__pycache__/
+*.py[cod]
+
+# Ignora arquivos de configuração do editor
+.vscode/
+.idea/
+
+# Ignora arquivos de log e temporários
+*.log
+*.tmp
+
+# Ignora arquivos de dados
+*.csv
+*.tsv
+*.dat
+*.db
+*.sqlite3
+
+# Ignora arquivos de pacotes
+*.egg-info/
+dist/
+build/
+
+# Ignora arquivos do DVC
+.dvc/
+.dvc/cache/
+
+# Ignora arquivos do sistema
+.DS_Store
+Thumbs.db
