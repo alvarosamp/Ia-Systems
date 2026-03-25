@@ -1,0 +1,15 @@
+stages:
+  prepare:
+    cmd: python src/data/prepare.py
+    deps:
+      - src/data/prepare.py
+    outs:
+      - data/processed
+
+  train:
+    cmd: python src/training/train.py
+    deps:
+      - src/training/train.py
+      - data/processed
+    outs:
+      - artifacts/model

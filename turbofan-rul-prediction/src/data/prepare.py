@@ -1,0 +1,97 @@
+from __future__ import annotations
+
+from pathlib import Path
+from typing import List
+
+import pandas as pd
+
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+RAW_DIR = ROOT_DIR / "data" / "raw"
+PROCESSED_DIR = ROOT_DIR / "data" / "processed"
+
+TRAIN_FILE = RAW_DIR / "train_FD001.txt"
+TEST_FILE = RAW_DIR / "test_FD001.txt"
+RUL_FILE = RAW_DIR / "RUL_FD001.txt"
+
+TRAIN_OUTPUT = PROCESSED_DIR / "train.parquet"
+TEST_OUTPUT = PROCESSED_DIR / "test.parquet"
+
+
+def build_column_names() -> List[str]:
+    operational_settings = [f"setting_{i}" for i in range(1, 4)]
+    sensors = [f"sensor_{i}" for i in range(1, 22)]
+    return ["unit_id", "cycle", *operational_settings, *sensors]
+
+
+def read_cmapss_file(file_path: Path) -> pd.DataFrame:
+    columns = build_column_names()
+    df = pd.read_csv(
+        file_path,
+        sep=r"\s+",
+        header=None,
+        names=columns,
+        engine="python",
+    )
+    return df
+
+
+def compute_train_rul(train_df: pd.DataFrame) -> pd.DataFrame:
+    max_cycle = train_df.groupby("unit_id")["cycle"].max().rename("max_cycle")
+    train_df = train_df.merge(max_cycle, on="unit_id", how="left")
+    train_df["rul"] = train_df["max_cycle"] - train_df["cycle"]
+    train_df = train_df.drop(columns=["max_cycle"])
+    return train_df
+
+
+def compute_test_rul(test_df: pd.DataFrame, rul_df: pd.DataFrame) -> pd.DataFrame:
+    rul_df = rul_df.copy()
+    rul_df.columns = ["extra_rul"]
+    rul_df["unit_id"] = range(1, len(rul_df) + 1)
+
+    max_cycle = test_df.groupby("unit_id")["cycle"].max().rename("max_cycle")
+    test_df = test_df.merge(max_cycle, on="unit_id", how="left")
+    test_df = test_df.merge(rul_df, on="unit_id", how="left")
+    test_df["rul"] = test_df["max_cycle"] - test_df["cycle"] + test_df["extra_rul"]
+    test_df = test_df.drop(columns=["max_cycle", "extra_rul"])
+    return test_df
+
+
+def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    df = df.drop_duplicates()
+    df = df.sort_values(["unit_id", "cycle"]).reset_index(drop=True)
+    return df
+
+
+def main() -> None:
+    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+
+    if not TRAIN_FILE.exists():
+        raise FileNotFoundError(f"Arquivo não encontrado: {TRAIN_FILE}")
+    if not TEST_FILE.exists():
+        raise FileNotFoundError(f"Arquivo não encontrado: {TEST_FILE}")
+    if not RUL_FILE.exists():
+        raise FileNotFoundError(f"Arquivo não encontrado: {RUL_FILE}")
+
+    train_df = read_cmapss_file(TRAIN_FILE)
+    test_df = read_cmapss_file(TEST_FILE)
+    rul_df = pd.read_csv(RUL_FILE, sep=r"\s+", header=None, engine="python").dropna(axis=1, how="all")
+
+    train_df = clean_dataframe(train_df)
+    test_df = clean_dataframe(test_df)
+
+    train_df = compute_train_rul(train_df)
+    test_df = compute_test_rul(test_df, rul_df)
+
+    train_df.to_parquet(TRAIN_OUTPUT, index=False)
+    test_df.to_parquet(TEST_OUTPUT, index=False)
+
+    print(f"Train salvo em: {TRAIN_OUTPUT}")
+    print(f"Test salvo em: {TEST_OUTPUT}")
+    print(f"Shape train: {train_df.shape}")
+    print(f"Shape test: {test_df.shape}")
+
+
+if __name__ == "__main__":
+    main()
