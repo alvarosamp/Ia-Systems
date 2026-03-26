@@ -9,8 +9,10 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-MODEL_FILE = ROOT_DIR / "artifacts" / "model" / "model.joblib"
+
+# Ajuste para refletir a estrutura real do projeto
+SRC_DIR = Path(__file__).resolve().parent
+MODEL_FILE = SRC_DIR.parent.parent / "artifacts" / "model" / "model.joblib"
 
 app = FastAPI(title="Turbofan RUL Prediction API")
 

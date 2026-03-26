@@ -8,10 +8,12 @@ import joblib
 import pandas as pd
 
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-MODEL_FILE = ROOT_DIR / "artifacts" / "model" / "model.joblib"
-TEST_FILE = ROOT_DIR / "data" / "processed" / "test.parquet"
-OUTPUT_FILE = ROOT_DIR / "artifacts" / "model" / "predictions.parquet"
+
+# Ajuste para refletir a estrutura real do projeto
+SRC_DIR = Path(__file__).resolve().parent
+MODEL_FILE = SRC_DIR.parent.parent / "artifacts" / "model" / "model.joblib"
+TEST_FILE = SRC_DIR.parent.parent / "data" / "processed" / "test.parquet"
+OUTPUT_FILE = SRC_DIR.parent.parent / "artifacts" / "model" / "predictions.parquet"
 
 DROP_COLUMNS = ["unit_id", "cycle", "rul"]
 

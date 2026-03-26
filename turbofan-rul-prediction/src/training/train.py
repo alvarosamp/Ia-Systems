@@ -13,9 +13,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-PROCESSED_DIR = ROOT_DIR / "data" / "processed"
-ARTIFACTS_DIR = ROOT_DIR / "artifacts" / "model"
+
+# Ajuste para refletir a estrutura real do projeto
+SRC_DIR = Path(__file__).resolve().parent
+PROCESSED_DIR = SRC_DIR.parent / "data" / "processed"
+ARTIFACTS_DIR = SRC_DIR.parent.parent / "artifacts" / "model"
 
 TRAIN_FILE = PROCESSED_DIR / "train.parquet"
 TEST_FILE = PROCESSED_DIR / "test.parquet"

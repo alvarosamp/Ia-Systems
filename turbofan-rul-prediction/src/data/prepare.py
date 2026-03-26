@@ -6,9 +6,11 @@ from typing import List
 import pandas as pd
 
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-RAW_DIR = ROOT_DIR / "data" / "raw"
-PROCESSED_DIR = ROOT_DIR / "data" / "processed"
+
+# Ajuste para refletir a estrutura real do projeto (src/data/raw)
+SRC_DIR = Path(__file__).resolve().parent
+RAW_DIR = SRC_DIR / "raw" / "archive" / "CMaps"
+PROCESSED_DIR = SRC_DIR / "processed"
 
 TRAIN_FILE = RAW_DIR / "train_FD001.txt"
 TEST_FILE = RAW_DIR / "test_FD001.txt"
