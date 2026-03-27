@@ -65,14 +65,14 @@ def main():
     with mlflow.start_run(run_name = 'Optuna_rf_xgb'):
         #RF
         rf_study = optuna.create_study(direction = 'minimize')
-        rf_study.optimize(lambda trial: rf_objective(trial, X, y), n_trials = 50)
+        rf_study.optimize(lambda trial: rf_objective(trial, X, y), n_trials = 15)
         results['rf'] = {
             'best_value_rmse' : rf_study.best_value,
             'best_params' : rf_study.best_params,
         }
         #XGB
         xgb_study = optuna.create_study(direction = 'minimize')
-        xgb_study.optimize(lambda trial: xbg_objetive(trial, X, y), n_trials = 50)
+        xgb_study.optimize(lambda trial: xbg_objetive(trial, X, y), n_trials = 15)
         results['xgb'] = {
             'best_value_rmse' : xgb_study.best_value,
             'best_params' : xgb_study.best_params
