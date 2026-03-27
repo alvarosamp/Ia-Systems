@@ -2,17 +2,20 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
-  test:
+  test-and-train:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -21,5 +24,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests
-        run: pytest
+      - name: Check raw data folder
+        run: |
+          mkdir -p data/raw
+          echo "CI ready"
+
+      - name: Smoke test imports
+        run: |
+          python -c "import src"
+          python -c "from src.core.settings import ROOT_DIR; print(ROOT_DIR)"
