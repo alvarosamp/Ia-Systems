@@ -1,0 +1,113 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python -m src.data.prepare
+    deps:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 3238580aa3b7a0a59082227494f0da00
+      size: 351257
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: a6a1126a27bb7d69c4b56120263aafce
+      size: 534972
+    - path: src/core/settings.py
+      hash: md5
+      md5: 25c7956415f175ef3d7756d9342de349
+      size: 1553
+    - path: src/data/prepare.py
+      hash: md5
+      md5: 372a9485d621d430bea539474dfcdbbb
+      size: 3046
+  build_features:
+    cmd: python -m src.features.build_features
+    deps:
+    - path: data/processed/test.parquet
+      hash: md5
+      md5: 3238580aa3b7a0a59082227494f0da00
+      size: 351257
+    - path: data/processed/train.parquet
+      hash: md5
+      md5: a6a1126a27bb7d69c4b56120263aafce
+      size: 534972
+    - path: src/core/settings.py
+      hash: md5
+      md5: 25c7956415f175ef3d7756d9342de349
+      size: 1553
+    - path: src/features/build_features.py
+      hash: md5
+      md5: 7c43a48749d656b0d45c1f3f51174df0
+      size: 1942
+    outs:
+    - path: src/data/processed/test_features.parquet
+      hash: md5
+      md5: 431b3cdb797c489ebce6f62a70272d4e
+      size: 2617610
+    - path: src/data/processed/train_features.parquet
+      hash: md5
+      md5: 42c4c68ba2b8fed420f0e947321148e1
+      size: 4131465
+  train:
+    cmd: python -m src.training.train
+    deps:
+    - path: configs/config.yaml
+      hash: md5
+      md5: b90df1d6659e185614d8e3246c3eea5f
+      size: 376
+    - path: configs/model/random_forest.yaml
+      hash: md5
+      md5: 9e571099f523b4b444f6479f1801f2cf
+      size: 115
+    - path: configs/training/default.yaml
+      hash: md5
+      md5: 6899b848aa27dd6d9380ab461cf94859
+      size: 32
+    - path: src/core/settings.py
+      hash: md5
+      md5: 25c7956415f175ef3d7756d9342de349
+      size: 1553
+    - path: src/data/processed/test_features.parquet
+      hash: md5
+      md5: 431b3cdb797c489ebce6f62a70272d4e
+      size: 2617610
+    - path: src/data/processed/train_features.parquet
+      hash: md5
+      md5: 42c4c68ba2b8fed420f0e947321148e1
+      size: 4131465
+    - path: src/training/evaluate.py
+      hash: md5
+      md5: 04a32929c2c593948ef291ac8176b3da
+      size: 410
+    - path: src/training/train.py
+      hash: md5
+      md5: 3b36c3f12d4c34aad1f368b4dcd5bcb5
+      size: 4151
+    outs:
+    - path: artifacts/model/model.joblib
+      hash: md5
+      md5: 1d41b39ba704a262be1367cbc9883977
+      size: 71236362
+  predict:
+    cmd: python -m src.inference.predict
+    deps:
+    - path: artifacts/model/model.joblib
+      hash: md5
+      md5: 1d41b39ba704a262be1367cbc9883977
+      size: 71236362
+    - path: src/core/settings.py
+      hash: md5
+      md5: 25c7956415f175ef3d7756d9342de349
+      size: 1553
+    - path: src/data/processed/test_features.parquet
+      hash: md5
+      md5: 431b3cdb797c489ebce6f62a70272d4e
+      size: 2617610
+    - path: src/inference/predict.py
+      hash: md5
+      md5: 64cc6f06e143985e37259f45c52655b2
+      size: 2413
+    outs:
+    - path: artifacts/model/predictions.parquet
+      hash: md5
+      md5: 1631a4ccad95becb7d072cbc497eb0a8
+      size: 479598

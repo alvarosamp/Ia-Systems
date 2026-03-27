@@ -15,3 +15,5 @@ jupyter
 pyarrow
 optuna
 hydra-core
+prefect
+evidently

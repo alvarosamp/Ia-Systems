@@ -1,15 +1,43 @@
 stages:
   prepare:
-    cmd: python src/data/prepare.py
+    cmd: python -m src.data.prepare
     deps:
       - src/data/prepare.py
+      - src/core/settings.py
+      - data/processed/train.parquet
+      - data/processed/test.parquet
+
+  build_features:
+    cmd: python -m src.features.build_features
+    deps:
+      - src/features/build_features.py
+      - src/core/settings.py
+      - data/processed/train.parquet
+      - data/processed/test.parquet
     outs:
-      - data/processed
+      - src/data/processed/train_features.parquet
+      - src/data/processed/test_features.parquet
 
   train:
-    cmd: python src/training/train.py
+    cmd: python -m src.training.train
     deps:
       - src/training/train.py
-      - data/processed
+      - src/training/evaluate.py
+      - src/core/settings.py
+      - configs/config.yaml
+      - configs/model/random_forest.yaml
+      - configs/training/default.yaml
+      - src/data/processed/train_features.parquet
+      - src/data/processed/test_features.parquet
     outs:
-      - artifacts/model
+      - artifacts/model/model.joblib
+
+  predict:
+    cmd: python -m src.inference.predict
+    deps:
+      - src/inference/predict.py
+      - src/core/settings.py
+      - artifacts/model/model.joblib
+      - src/data/processed/test_features.parquet
+    outs:
+      - artifacts/model/predictions.parquet
