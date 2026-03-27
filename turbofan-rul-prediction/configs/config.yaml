@@ -1,0 +1,20 @@
+defaults:
+  - model: random_forest
+  - training: default
+
+experiment:
+  name: turbofan_rul_prediction
+
+paths:
+  train_data: src/data/processed/train_features.parquet
+  optuna_output: artifacts/optuna/optuna_results.json
+  model_output: artifacts/model
+
+mlflow:
+  experiment_name: turbofan_rul_prediction
+
+optuna:
+  n_trials: 50
+
+training:
+  random_state: 42

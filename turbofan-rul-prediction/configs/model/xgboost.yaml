@@ -1,0 +1,8 @@
+name: xgboost
+
+params:
+  n_estimators: 300
+  max_depth: 8
+  learning_rate: 0.05
+  subsample: 0.9
+  colsample_bytree: 0.9

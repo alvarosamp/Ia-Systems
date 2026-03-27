@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-
+import hydra
 import joblib
 import mlflow
 import mlflow.sklearn
@@ -10,6 +10,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBRegressor
+from omegaconf import DictConfig, OmegaConf
 
 from src.core.settings import (
     FEATURE_TRAIN_FILE,
@@ -22,7 +23,7 @@ from src.core.settings import (
 from src.training.evaluate import evaluate_regression
 
 
-def load_data():
+def load_data(FEATURE_TRAIN_FILE=FEATURE_TRAIN_FILE, FEATURE_TEST_FILE=FEATURE_TEST_FILE):
     train_df = pd.read_parquet(FEATURE_TRAIN_FILE)
     test_df = pd.read_parquet(FEATURE_TEST_FILE)
     return train_df, test_df
@@ -32,85 +33,77 @@ def split_Xy(df: pd.DataFrame):
     y = df["rul"]
     return X, y
 
-def build_random_forest():
-    return Pipeline(
-        steps=[
-            ("scaler", StandardScaler()),
-            (
-                "model",
-                RandomForestRegressor(
-                    n_estimators=100,
-                    max_depth=12,
-                    random_state=42,
-                    n_jobs=-1,
-                    min_samples_split = 4,
-                    min_samples_leaf= 2
+def build_model(cfg: DictConfig):
+    if cfg.model.name == "random_forest":
+        return Pipeline(
+            steps=[
+                ("scaler", StandardScaler()),
+                (
+                    "model",
+                    RandomForestRegressor(
+                        **cfg.model.params,
+                        random_state=42,
+                        n_jobs=-1,
+                    ),
                 ),
-            ),
-        ]
-    )
+            ]
+        )
+    if cfg.model.name == "xgboost":
+        return XGBRegressor(
+            **cfg.model.params,
+            random_state=cfg.training.random_state,
+            n_jobs=-1,
+            objective="reg:squarederror",
+        )
+    raise ValueError(f"Modelo nao suportado: {cfg.model.name}")
 
-def build_xgboost():
-    return XGBRegressor(
-        n_estimators=300,
-        max_depth=8,
-        learning_rate=0.05,
-        subsample=0.9,
-        colsample_bytree=0.9,
-        random_state=42,
-        n_jobs=-1,
-        objective="reg:squarederror",
-    )
-    
-def train_and_evaluate(model_name: str, model, X_train, y_train, X_test, y_test):
-    model.fit(X_train, y_train)
-    preds = model.predict(X_test)
-    metrics = evaluate_regression(y_test, preds)
-    return model, metrics
-
-def main():
+@hydra.main(version_base=None, config_path="../../configs", config_name="config")
+def main(cfg: DictConfig):
     ensure_directories()
-    train_df, test_df = load_data()
-    X_train, y_train = split_Xy(train_df)
-    X_test, y_test = split_Xy(test_df)
-    
-    candidates = {
-        "random_forest": build_random_forest(),
-        "xgboost": build_xgboost(),
-    }
-    
-    results = {}
-    trained_models = {}
-    mlflow.set_experiment("turbofan_rul_prediction-v2")
-    with mlflow.start_run(run_name="model_comparison_v2"):
-        for model_name, model in candidates.items():
-            trained_model, metrics = train_and_evaluate(
-                model_name, model, X_train, y_train, X_test, y_test
-            )
-            trained_models[model_name] = trained_model
-            results[model_name] = metrics
-            mlflow.log_metrics({f"{model_name}_{k}": v for k, v in metrics.items()})
-            
-        # Salvar os resultados e o melhor modelo
-        best_model_name = min(results, key=lambda k: results[k]["rmse"])
-        best_model = trained_models[best_model_name]
-        
-        joblib.dump(best_model, BEST_MODEL_FILE)
-        
-        summary = {
-            'best_model': best_model_name,
-            'metrics': results,
-        }
-        
-        with open(METRICS_FILE, "w", encoding="utf-8") as f:
-            json.dump(summary, f, indent=2)
-            
-        mlflow.log_param("best_model", best_model_name)
-        mlflow.log_artifact(str(BEST_MODEL_FILE))
-        mlflow.log_artifact(str(METRICS_FILE))
-        
-        print(json.dumps(summary, indent=2))
-        
+
+    project_root = Path(hydra.utils.get_original_cwd())
+
+    train_path = project_root / cfg.paths.train_data
+    test_path = project_root / cfg.paths.test_data
+    model_output = project_root / cfg.paths.model_output
+    metrics_output = project_root / cfg.paths.metrics_output
+
+    print("Config carregada:")
+    print(OmegaConf.to_yaml(cfg))
+
+    train_df, test_df = load_data(str(train_path), str(test_path))
+    x_train, y_train = split_xy(train_df)
+    x_test, y_test = split_xy(test_df)
+
+    model = build_model(cfg)
+
+    mlflow.set_experiment(cfg.mlflow.experiment_name)
+
+    with mlflow.start_run(run_name=cfg.model.name):
+        mlflow.log_param("model_name", cfg.model.name)
+        mlflow.log_params(dict(cfg.model.params))
+
+        model.fit(x_train, y_train)
+        preds = model.predict(x_test)
+
+        metrics = evaluate_regression(y_test, preds)
+        mlflow.log_metrics(metrics)
+
+        model_output.parent.mkdir(parents=True, exist_ok=True)
+        metrics_output.parent.mkdir(parents=True, exist_ok=True)
+
+        joblib.dump(model, model_output)
+
+        with open(metrics_output, "w", encoding="utf-8") as f:
+            json.dump(metrics, f, indent=2)
+
+        mlflow.log_artifact(str(metrics_output))
+        mlflow.sklearn.log_model(model, artifact_path="model")
+
+        print("Treino concluído.")
+        print(json.dumps(metrics, indent=2))
+
+
 if __name__ == "__main__":
     main()
     
