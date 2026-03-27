@@ -7,17 +7,14 @@ import pandas as pd
 
 
 
-# Ajuste para refletir a estrutura real do projeto (src/data/raw)
-SRC_DIR = Path(__file__).resolve().parent
-RAW_DIR = SRC_DIR / "raw" / "archive" / "CMaps"
-PROCESSED_DIR = SRC_DIR / "processed"
-
-TRAIN_FILE = RAW_DIR / "train_FD001.txt"
-TEST_FILE = RAW_DIR / "test_FD001.txt"
-RUL_FILE = RAW_DIR / "RUL_FD001.txt"
-
-TRAIN_OUTPUT = PROCESSED_DIR / "train.parquet"
-TEST_OUTPUT = PROCESSED_DIR / "test.parquet"
+from src.core.settings import (
+    TRAIN_RAW_FILE,
+    TEST_RAW_FILE,
+    RUL_RAW_FILE,
+    TRAIN_PROCESSED_FILE,
+    TEST_PROCESSED_FILE,
+    ensure_directories,
+)
 
 
 def build_column_names() -> List[str]:
@@ -67,18 +64,18 @@ def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> None:
-    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    ensure_directories()
 
-    if not TRAIN_FILE.exists():
-        raise FileNotFoundError(f"Arquivo não encontrado: {TRAIN_FILE}")
-    if not TEST_FILE.exists():
-        raise FileNotFoundError(f"Arquivo não encontrado: {TEST_FILE}")
-    if not RUL_FILE.exists():
-        raise FileNotFoundError(f"Arquivo não encontrado: {RUL_FILE}")
+    if not TRAIN_RAW_FILE.exists():
+        raise FileNotFoundError(f"Arquivo não encontrado: {TRAIN_RAW_FILE}")
+    if not TEST_RAW_FILE.exists():
+        raise FileNotFoundError(f"Arquivo não encontrado: {TEST_RAW_FILE}")
+    if not RUL_RAW_FILE.exists():
+        raise FileNotFoundError(f"Arquivo não encontrado: {RUL_RAW_FILE}")
 
-    train_df = read_cmapss_file(TRAIN_FILE)
-    test_df = read_cmapss_file(TEST_FILE)
-    rul_df = pd.read_csv(RUL_FILE, sep=r"\s+", header=None, engine="python").dropna(axis=1, how="all")
+    train_df = read_cmapss_file(TRAIN_RAW_FILE)
+    test_df = read_cmapss_file(TEST_RAW_FILE)
+    rul_df = pd.read_csv(RUL_RAW_FILE, sep=r"\s+", header=None, engine="python").dropna(axis=1, how="all")
 
     train_df = clean_dataframe(train_df)
     test_df = clean_dataframe(test_df)
@@ -86,11 +83,11 @@ def main() -> None:
     train_df = compute_train_rul(train_df)
     test_df = compute_test_rul(test_df, rul_df)
 
-    train_df.to_parquet(TRAIN_OUTPUT, index=False)
-    test_df.to_parquet(TEST_OUTPUT, index=False)
+    train_df.to_parquet(TRAIN_PROCESSED_FILE, index=False)
+    test_df.to_parquet(TEST_PROCESSED_FILE, index=False)
 
-    print(f"Train salvo em: {TRAIN_OUTPUT}")
-    print(f"Test salvo em: {TEST_OUTPUT}")
+    print(f"Train salvo em: {TRAIN_PROCESSED_FILE}")
+    print(f"Test salvo em: {TEST_PROCESSED_FILE}")
     print(f"Shape train: {train_df.shape}")
     print(f"Shape test: {test_df.shape}")
 

@@ -8,15 +8,8 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from src.core.settings import BEST_MODEL_FILE, MODEL_FILE
 
-# =========================
-# PATHS DO PROJETO
-# =========================
-SRC_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SRC_DIR.parent.parent
-ARTIFACTS_DIR = PROJECT_ROOT / "artifacts" / "model"
-
-MODEL_FILE = ARTIFACTS_DIR / "model.joblib"
 
 app = FastAPI(title="Turbofan RUL Prediction API")
 
@@ -70,7 +63,7 @@ model = None
 @app.on_event("startup")
 def startup_event():
     global model
-    model = load_model()
+    model = joblib.load(BEST_MODEL_FILE)
 
 
 # =========================
@@ -119,18 +112,6 @@ def get_expected_features():
 
 @app.post("/predict")
 def predict(payload: PredictionRequest):
-    if model is None:
-        raise HTTPException(status_code=500, detail="Modelo não foi carregado.")
-
-    try:
-        features_dict = payload.features.model_dump()
-        df = pd.DataFrame([features_dict])
-
-        pred = model.predict(df)[0]
-
-        return {
-            "predicted_rul": float(pred)
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao gerar predição: {str(e)}")
+    df = pd.DataFrame([payload.features])
+    pred = model.predict(df)[0]
+    return {"predicted_rul": float(pred)}
