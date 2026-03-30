@@ -1,0 +1,21 @@
+model:
+  name: xgboost
+  params:
+    n_estimators: 300
+    max_depth: 8
+    learning_rate: 0.05
+    subsample: 0.9
+    colsample_bytree: 0.9
+training:
+  test_size: 0.2
+  random_state: 42
+experiment:
+  name: turbofan_rul_prediction
+paths:
+  train_data: src/data/processed/train_features.parquet
+  optuna_output: artifacts/optuna/optuna_results.json
+  model_output: artifacts/model
+mlflow:
+  experiment_name: turbofan_rul_prediction
+optuna:
+  n_trials: 50
