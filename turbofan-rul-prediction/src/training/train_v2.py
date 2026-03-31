@@ -12,6 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBRegressor
 from omegaconf import DictConfig, OmegaConf
 
+from pathlib import Path
 from src.core.settings import (
     FEATURE_TRAIN_FILE,
     FEATURE_TEST_FILE,
@@ -65,15 +66,18 @@ def main(cfg: DictConfig):
 
     train_path = project_root / cfg.paths.train_data
     test_path = project_root / cfg.paths.test_data
-    model_output = project_root / cfg.paths.model_output
-    metrics_output = project_root / cfg.paths.metrics_output
+    # Salva modelo e métricas com nome do modelo
+    model_name = cfg.model.name
+    model_output = project_root / cfg.paths.model_output / f"model_{model_name}.joblib"
+    metrics_output = project_root / cfg.paths.model_output / f"metrics_{model_name}.json"
+    print(f"[DEBUG] Salvando métricas em: {metrics_output}")
 
     print("Config carregada:")
     print(OmegaConf.to_yaml(cfg))
 
     train_df, test_df = load_data(str(train_path), str(test_path))
-    x_train, y_train = split_xy(train_df)
-    x_test, y_test = split_xy(test_df)
+    x_train, y_train = split_Xy(train_df)
+    x_test, y_test = split_Xy(test_df)
 
     model = build_model(cfg)
 
@@ -94,8 +98,11 @@ def main(cfg: DictConfig):
 
         joblib.dump(model, model_output)
 
-        with open(metrics_output, "w", encoding="utf-8") as f:
-            json.dump(metrics, f, indent=2)
+        try:
+            with open(metrics_output, "w", encoding="utf-8") as f:
+                json.dump(metrics, f, indent=2)
+        except Exception as e:
+            print(f"[ERRO] Falha ao salvar métricas em {metrics_output}: {e}")
 
         mlflow.log_artifact(str(metrics_output))
         mlflow.sklearn.log_model(model, artifact_path="model")

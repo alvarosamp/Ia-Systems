@@ -1,21 +1,20 @@
-defaults:
-  - model: random_forest
-  - training: default
-
+model:
+  name: random_forest
+  params:
+    n_estimators: 300
+    max_depth: 12
+    min_samples_split: 4
+    min_samples_leaf: 2
+training:
+  test_size: 0.2
+  random_state: 42
 experiment:
   name: turbofan_rul_prediction
-
 paths:
   train_data: src/data/processed/train_features.parquet
-  test_data: src/data/processed/test_features.parquet
   optuna_output: artifacts/optuna/optuna_results.json
   model_output: artifacts/model
-
 mlflow:
   experiment_name: turbofan_rul_prediction
-
 optuna:
-  n_trials: 20
-
-training:
-  random_state: 42
+  n_trials: 50
