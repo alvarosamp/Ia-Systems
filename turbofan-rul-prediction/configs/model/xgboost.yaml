@@ -6,3 +6,7 @@ params:
   learning_rate: 0.05
   subsample: 0.9
   colsample_bytree: 0.9
+  min_child_weight: 3
+  gamma: 0
+  reg_alpha: 0
+  reg_lambda: 1
