@@ -41,6 +41,6 @@ def train(model_name = 'lstm', epoch = 50, seq_len = 30):
             optimizer.step()
             total_loss += loss.item()
         print(f"Epoch {epoch+1}/{epoch}, Loss: {total_loss/len(loader):.4f}")
-        
+    torch.save(model.state_dict(), "artifacts/model/lstm.pth")    
 if __name__ == "__main__":
     train('LSTM')
