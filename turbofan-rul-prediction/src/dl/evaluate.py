@@ -8,7 +8,7 @@ import pandas as pd
 import torch
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
-from src.dl.dataset import create_sequences
+from src.dl.datasets import create_sequences
 from src.dl.models import LSTMModel
 
 
@@ -16,6 +16,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ROOT_DIR = Path(__file__).resolve().parents[2]
 TEST_FILE = ROOT_DIR / "data" / "processed" / "test_features.parquet"
 MODEL_FILE = ROOT_DIR / "artifacts" / "model" / "lstm.pth"
+
 
 
 def evaluate_dl(model, X, y):
