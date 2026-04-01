@@ -1,20 +1,27 @@
-import pandas as pd 
 import numpy as np
 from torch.utils.data import Dataset
-from src.core.settings import DROP_COLUMNS
 
-def create_sequences(df, seq_len = 30):
+
+DROP_COLUMNS = ["unit_id", "cycle", "rul"]
+
+
+def create_sequences(df, seq_len=30):
     X, y = [], []
-    for unit_id in df['unit_id'].unique():
-        unit_id = df[df['unit_id'] == unit_id].sort_values('cycle')
-        features = unit_id.drop(columns = DROP_COLUMNS, errors="ignore").values
-        targets = unit_id['rul'].values
-        for i in range(len(unit_id) - seq_len):
-            X.append(features[i:i+seq_len])
-            y.append(targets[i+seq_len])
+
+    for unit_id in df["unit_id"].unique():
+        unit_df = df[df["unit_id"] == unit_id].sort_values("cycle")
+
+        features = unit_df.drop(columns=DROP_COLUMNS).values
+        targets = unit_df["rul"].values
+
+        for i in range(len(unit_df) - seq_len):
+            X.append(features[i:i + seq_len])
+            y.append(targets[i + seq_len])
+
     return np.array(X), np.array(y)
 
-class TurboFanDataset(Dataset):
+
+class TurbofanDataset(Dataset):
     def __init__(self, X, y):
         self.X = X.astype(np.float32)
         self.y = y.astype(np.float32)
