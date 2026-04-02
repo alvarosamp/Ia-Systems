@@ -14,8 +14,8 @@ from src.dl.models_v2 import LSTMRegressor
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ROOT_DIR = Path(__file__).resolve().parents[2]
-TEST_FEATURES_FILE = ROOT_DIR / "data" / "processed" / "test_features.parquet"
-MODEL_FILE = ROOT_DIR / "artifacts" / "model" / "lstm_v2.pth"
+TEST_FEATURES_FILE = r"C:\Users\vish8\OneDrive\Documentos\GitHub\Ia-Systems\turbofan-rul-prediction\src\data\processed\train_features.parquet"
+MODEL_FILE = r"C:\Users\vish8\OneDrive\Documentos\GitHub\Ia-Systems\turbofan-rul-prediction\src\artifacts\model\lstm_v2.pth"
 
 
 def compute_metrics(y_true, y_pred):
@@ -32,8 +32,10 @@ def main():
 
     feature_cols = checkpoint["feature_cols"]
 
+
     class SimpleScaler:
-        pass
+        def transform(self, X):
+            return (X - self.mean_) / self.scale_
 
     scaler = SimpleScaler()
     scaler.mean_ = np.array(checkpoint["scaler_mean"])

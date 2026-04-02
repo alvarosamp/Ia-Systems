@@ -28,8 +28,8 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 TRAIN_FEATURES_FILE = r"C:\Users\vish8\OneDrive\Documentos\GitHub\Ia-Systems\turbofan-rul-prediction\src\data\processed\train_features.parquet"
 TEST_FEATURES_FILE = r"C:\Users\vish8\OneDrive\Documentos\GitHub\Ia-Systems\turbofan-rul-prediction\src\data\processed\test_features.parquet"
 
-MODEL_DIR = r"C:\Users\vish8\OneDrive\Documentos\GitHub\Ia-Systems\turbofan-rul-prediction\src\artifacts\model"
-REPORT_DIR = r"C:\Users\vish8\OneDrive\Documentos\GitHub\Ia-Systems\turbofan-rul-prediction\src\artifacts\reports"
+MODEL_DIR = Path(r"C:\Users\vish8\OneDrive\Documentos\GitHub\Ia-Systems\turbofan-rul-prediction\src\artifacts\model")
+REPORT_DIR = Path(r"C:\Users\vish8\OneDrive\Documentos\GitHub\Ia-Systems\turbofan-rul-prediction\src\artifacts\reports")
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
 REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -65,15 +65,15 @@ def evaluate_model(model, loader, loss_fn):
 
 
 def train_lstm(
-    seq_len: int = 50,
-    hidden_size: int = 128,
-    num_layers: int = 2,
-    dropout: float = 0.2,
-    lr: float = 1e-3,
-    batch_size: int = 128,
-    epochs: int = 80,
-    patience: int = 10,
-    weight_decay: float = 1e-5,
+    seq_len=53,
+    hidden_size=200,
+    num_layers=3,
+    dropout=0.0068359429004963175,
+    lr=0.000780088047989325,
+    batch_size=64,
+    epochs=300,
+    patience=10,
+    weight_decay=1.7231272399285946e-05,
 ):
     print(f"Using device: {DEVICE}")
 
@@ -91,9 +91,9 @@ def train_lstm(
     X_val, y_val = create_sequences(val_df, seq_len=seq_len)
     X_test, y_test = create_sequences(test_df, seq_len=seq_len)
 
-    train_ds = TurbofanSequenceDataset(X_train, y_train)
-    val_ds = TurbofanSequenceDataset(X_val, y_val)
-    test_ds = TurbofanSequenceDataset(X_test, y_test)
+    train_ds = TurbofanDataset(X_train, y_train)
+    val_ds = TurbofanDataset(X_val, y_val)
+    test_ds = TurbofanDataset(X_test, y_test)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
@@ -231,13 +231,13 @@ def train_lstm(
 
 if __name__ == "__main__":
     train_lstm(
-        seq_len=51,
-        hidden_size=230,
-        num_layers=2,
-        dropout=0.2,
-        lr=0.0007042806975428223,
-        batch_size=128,
-        epochs=80,
-        patience=10,
-        weight_decay=1e-5,
-    )
+    seq_len=53,
+    hidden_size=200,
+    num_layers=3,
+    dropout=0.0068359429004963175,
+    lr=0.000780088047989325,
+    batch_size=64,
+    epochs=1000,
+    patience=200,
+    weight_decay=1.7231272399285946e-05,
+)
