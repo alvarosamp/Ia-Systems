@@ -1,16 +1,40 @@
-from fastapi import FastAPI
-from src.serving.inference import load_model, predict
+from fastapi import FastAPI, HTTPException
+from src.serving.schema import SequenceRequest, PredictionResponse
+from src.serving.inference import predict, checkpoint
 
-app = FastAPI()
 
-model, checkpoint = load_model(r"C:\Users\vish8\OneDrive\Documentos\GitHub\Ia-Systems\turbofan-rul-prediction\src\artifacts\model\lstm_v2.pth")
+app = FastAPI(
+    title="Turbofan RUL Prediction API",
+    description="Predict Remaining Useful Life using LSTM model",
+    version="1.0.0"
+)
+
 
 @app.get("/")
-def home():
+def root():
+    return {"message": "API is running"}
+
+
+@app.get("/health")
+def health():
     return {"status": "ok"}
 
-@app.post("/predict")
-def predict_rul(data: dict):
-    sequence = data["sequence"]
-    result = predict(model, sequence)
-    return {"predicted_rul": result}
+
+@app.get("/model-info")
+def model_info():
+    return {
+        "model": "LSTM v2",
+        "seq_len": checkpoint["seq_len"],
+        "feature_dim": checkpoint["feature_dim"],
+        "hidden_size": checkpoint["hidden_size"],
+        "num_layers": checkpoint["num_layers"]
+    }
+
+
+@app.post("/predict", response_model=PredictionResponse)
+def predict_rul(request: SequenceRequest):
+    try:
+        result = predict(request.sequence)
+        return {"predicted_rul": result}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
