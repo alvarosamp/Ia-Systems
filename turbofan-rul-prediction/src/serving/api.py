@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 from fastapi import FastAPI, HTTPException
 from src.serving.schema import SequenceRequest, PredictionResponse
 from src.serving.inference import predict, checkpoint
 
-
 app = FastAPI(
     title="Turbofan RUL Prediction API",
-    description="Predict Remaining Useful Life using LSTM model",
-    version="1.0.0"
+    description="Predict Remaining Useful Life using optimized LSTM model",
+    version="1.0.0",
 )
 
 
@@ -27,7 +28,8 @@ def model_info():
         "seq_len": checkpoint["seq_len"],
         "feature_dim": checkpoint["feature_dim"],
         "hidden_size": checkpoint["hidden_size"],
-        "num_layers": checkpoint["num_layers"]
+        "num_layers": checkpoint["num_layers"],
+        "dropout": checkpoint["dropout"],
     }
 
 

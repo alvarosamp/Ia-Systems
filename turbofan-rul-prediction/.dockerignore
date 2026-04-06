@@ -1,0 +1,16 @@
+.venv
+__pycache__
+.git
+.gitignore
+mlruns
+data
+notebooks
+outputs
+artifacts/reports
+artifacts/optuna
+mlflow.db
+.dvc
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
