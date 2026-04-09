@@ -1,11 +1,17 @@
-from pydantic import BaseModel, Field
+from __future__ import annotations
+
 from typing import List
+from pydantic import BaseModel, Field
 
 
 class SequenceRequest(BaseModel):
     sequence: List[List[float]] = Field(
         ...,
-        description="Sequence of timesteps with shape (seq_len x num_features)"
+        description="Sequência de timesteps com shape (seq_len, feature_dim). Dados brutos por padrão.",
+    )
+    normalized: bool = Field(
+        default=False,
+        description="Se True, assume que `sequence` já está normalizada com o scaler do treino.",
     )
 
 

@@ -1,4 +1,5 @@
 name: xgboost
+type: tabular
 
 params:
   n_estimators: 300

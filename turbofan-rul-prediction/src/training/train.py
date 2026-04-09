@@ -1,139 +1,116 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
-
+import hydra
 import joblib
 import mlflow
 import mlflow.sklearn
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from xgboost import XGBRegressor
+from omegaconf import DictConfig, OmegaConf
+
+from pathlib import Path
+from src.core.settings import (
+    FEATURE_TRAIN_FILE,
+    FEATURE_TEST_FILE,
+    BEST_MODEL_FILE,
+    METRICS_FILE,
+    ensure_directories,
+    DROP_COLUMNS,
+)
+from src.training.evaluate import evaluate_regression
 
 
-# =========================
-# PATHS DO PROJETO
-# =========================
-SRC_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SRC_DIR.parent.parent
-
-PROCESSED_DIR = SRC_DIR.parent / "data" / "processed"
-ARTIFACTS_DIR = PROJECT_ROOT / "artifacts" / "model"
-
-TRAIN_FILE = PROCESSED_DIR / "train.parquet"
-TEST_FILE = PROCESSED_DIR / "test.parquet"
-
-MODEL_FILE = ARTIFACTS_DIR / "model.joblib"
-METRICS_FILE = ARTIFACTS_DIR / "metrics.json"
-
-DROP_COLUMNS = ["unit_id", "cycle", "rul"]
-
-
-# =========================
-# FUNÇÕES AUXILIARES
-# =========================
-def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
-    if not TRAIN_FILE.exists():
-        raise FileNotFoundError(f"Arquivo não encontrado: {TRAIN_FILE}")
-    if not TEST_FILE.exists():
-        raise FileNotFoundError(f"Arquivo não encontrado: {TEST_FILE}")
-
-    train_df = pd.read_parquet(TRAIN_FILE)
-    test_df = pd.read_parquet(TEST_FILE)
+def load_data(FEATURE_TRAIN_FILE=FEATURE_TRAIN_FILE, FEATURE_TEST_FILE=FEATURE_TEST_FILE):
+    train_df = pd.read_parquet(FEATURE_TRAIN_FILE)
+    test_df = pd.read_parquet(FEATURE_TEST_FILE)
     return train_df, test_df
 
-
-def build_xy(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
-    x = df.drop(columns=DROP_COLUMNS, errors="ignore")
+def split_Xy(df: pd.DataFrame):
+    X = df.drop(columns=DROP_COLUMNS, errors="ignore")
     y = df["rul"]
-    return x, y
+    return X, y
 
-
-def build_model() -> Pipeline:
-    return Pipeline(
-        steps=[
-            ("scaler", StandardScaler()),
-            (
-                "model",
-                RandomForestRegressor(
-                    n_estimators=300,
-                    max_depth=12,
-                    min_samples_split=4,
-                    min_samples_leaf=2,
-                    random_state=42,
-                    n_jobs=-1,
+def build_model(cfg: DictConfig):
+    if cfg.model.name == "random_forest":
+        return Pipeline(
+            steps=[
+                ("scaler", StandardScaler()),
+                (
+                    "model",
+                    RandomForestRegressor(
+                        **cfg.model.params,
+                        random_state=42,
+                        n_jobs=-1,
+                    ),
                 ),
-            ),
-        ]
-    )
+            ]
+        )
+    if cfg.model.name == "xgboost":
+        return XGBRegressor(
+            **cfg.model.params,
+            random_state=cfg.training.random_state,
+            n_jobs=-1,
+            objective="reg:squarederror",
+        )
+    raise ValueError(f"Modelo nao suportado: {cfg.model.name}")
 
+@hydra.main(version_base=None, config_path="../../configs", config_name="config")
+def main(cfg: DictConfig):
+    ensure_directories()
 
-def evaluate(y_true: pd.Series, y_pred) -> dict:
-    rmse = mean_squared_error(y_true, y_pred) ** 0.5
-    mae = mean_absolute_error(y_true, y_pred)
-    r2 = r2_score(y_true, y_pred)
+    project_root = Path(hydra.utils.get_original_cwd())
 
-    return {
-        "rmse": float(rmse),
-        "mae": float(mae),
-        "r2": float(r2),
-    }
+    train_path = project_root / cfg.paths.train_data
+    test_path = project_root / cfg.paths.test_data
+    # Salva modelo e métricas com nome do modelo
+    model_name = cfg.model.name
+    model_output = project_root / cfg.paths.model_output / f"model_{model_name}.joblib"
+    metrics_output = project_root / cfg.paths.model_output / f"metrics_{model_name}.json"
+    print(f"[DEBUG] Salvando métricas em: {metrics_output}")
 
+    print("Config carregada:")
+    print(OmegaConf.to_yaml(cfg))
 
-# =========================
-# MAIN
-# =========================
-def main() -> None:
-    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    train_df, test_df = load_data(str(train_path), str(test_path))
+    x_train, y_train = split_Xy(train_df)
+    x_test, y_test = split_Xy(test_df)
 
-    mlflow_db = PROJECT_ROOT / "mlflow.db"
-    tracking_uri = f"sqlite:///{mlflow_db.as_posix()}"
+    model = build_model(cfg)
 
-    mlflow.set_tracking_uri(tracking_uri)
-    mlflow.set_experiment("turbofan-rul-prediction")
+    mlflow.set_experiment(cfg.mlflow.experiment_name)
 
-    print(f"Usando dados de treino em: {TRAIN_FILE}")
-    print(f"Usando dados de teste em: {TEST_FILE}")
-    print(f"MLflow tracking URI: {tracking_uri}")
-
-    train_df, test_df = load_data()
-    x_train, y_train = build_xy(train_df)
-    x_test, y_test = build_xy(test_df)
-
-    model = build_model()
-
-    with mlflow.start_run(run_name="random_forest_baseline") as run:
-        mlflow.log_param("model_type", "RandomForestRegressor")
-        mlflow.log_param("n_estimators", 300)
-        mlflow.log_param("max_depth", 12)
-        mlflow.log_param("min_samples_split", 4)
-        mlflow.log_param("min_samples_leaf", 2)
-        mlflow.log_param("random_state", 42)
-        mlflow.log_param("train_rows", len(train_df))
-        mlflow.log_param("test_rows", len(test_df))
-        mlflow.log_param("n_features", x_train.shape[1])
+    with mlflow.start_run(run_name=cfg.model.name):
+        mlflow.log_param("model_name", cfg.model.name)
+        mlflow.log_params(dict(cfg.model.params))
 
         model.fit(x_train, y_train)
         preds = model.predict(x_test)
 
-        metrics = evaluate(y_test, preds)
+        metrics = evaluate_regression(y_test, preds)
         mlflow.log_metrics(metrics)
 
-        joblib.dump(model, MODEL_FILE)
+        model_output.parent.mkdir(parents=True, exist_ok=True)
+        metrics_output.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(METRICS_FILE, "w", encoding="utf-8") as f:
-            json.dump(metrics, f, indent=2)
+        joblib.dump(model, model_output)
 
-        mlflow.log_artifact(str(MODEL_FILE))
-        mlflow.log_artifact(str(METRICS_FILE))
-        mlflow.sklearn.log_model(sk_model=model, name="sklearn-model")
+        try:
+            with open(metrics_output, "w", encoding="utf-8") as f:
+                json.dump(metrics, f, indent=2)
+        except Exception as e:
+            print(f"[ERRO] Falha ao salvar métricas em {metrics_output}: {e}")
 
-        print("Treino concluído com sucesso.")
-        print(f"Run ID: {run.info.run_id}")
+        mlflow.log_artifact(str(metrics_output))
+        mlflow.sklearn.log_model(model, artifact_path="model")
+
+        print("Treino concluído.")
         print(json.dumps(metrics, indent=2))
 
 
 if __name__ == "__main__":
     main()
+    

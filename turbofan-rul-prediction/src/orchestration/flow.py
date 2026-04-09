@@ -17,14 +17,17 @@ def build_features():
 
 
 @task
-def train_model(model_name: str = "random_forest"):
-    if model_name == "random_forest":
-        subprocess.run([sys.executable, "-m", "src.training.train"], check=True)
-    else:
-        subprocess.run(
-            [sys.executable, "-m", "src.training.train", f"model={model_name}"],
-            check=True,
-        )
+def train_lstm():
+    subprocess.run([sys.executable, "-m", "src.dl.train_lstm"], check=True)
+
+
+@task
+def train_baseline(model_name: str = "xgboost"):
+    """Treina baseline tabular (xgboost ou random_forest) pra comparação."""
+    subprocess.run(
+        [sys.executable, "-m", "src.training.train", f"model={model_name}"],
+        check=True,
+    )
 
 
 @task
@@ -32,11 +35,16 @@ def run_predict():
     subprocess.run([sys.executable, "-m", "src.inference.predict"], check=True)
 
 
-@flow
-def turbofan_pipeline(model_name: str = "random_forest"):
+@flow(name="turbofan-rul-pipeline")
+def turbofan_pipeline(
+    train_baseline_model: bool = True,
+    baseline_name: str = "xgboost",
+):
     prepare_data()
     build_features()
-    train_model(model_name=model_name)
+    train_lstm()
+    if train_baseline_model:
+        train_baseline(model_name=baseline_name)
     run_predict()
 
 

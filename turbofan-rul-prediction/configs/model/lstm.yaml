@@ -1,0 +1,19 @@
+name: lstm
+type: deep_learning
+
+params:
+  seq_len: 53
+  hidden_size: 200
+  num_layers: 3
+  dropout: 0.0068359429004963175
+  lr: 0.000780088047989325
+  batch_size: 64
+  weight_decay: 0.000017231272399285946
+
+training:
+  epochs: 600
+  patience: 20
+  val_ratio: 0.2
+  grad_clip: 1.0
+  scheduler_factor: 0.5
+  scheduler_patience: 4

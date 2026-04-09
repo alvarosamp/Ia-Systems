@@ -1,10 +1,10 @@
 defaults:
-  - model: xgboost
+  - model: lstm
   - training: default
   - _self_
 
 experiment:
-  name: turbofan_rul_prediction-xgboost
+  name: turbofan_rul_prediction-lstm
 
 paths:
   train_data: src/data/processed/train_features.parquet
@@ -14,7 +14,8 @@ paths:
   metrics_output: artifacts/reports/metrics.json
 
 mlflow:
-  experiment_name: turbofan_rul_prediction
+  experiment_name: turbofan-rul-prediction
+  tracking_uri: sqlite:///mlflow.db
 
 optuna:
   n_trials: 50

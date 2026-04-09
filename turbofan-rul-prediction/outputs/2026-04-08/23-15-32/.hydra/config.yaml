@@ -1,0 +1,34 @@
+model:
+  name: lstm
+  type: deep_learning
+  params:
+    seq_len: 53
+    hidden_size: 200
+    num_layers: 3
+    dropout: 0.0068359429004963175
+    lr: 0.000780088047989325
+    batch_size: 64
+    weight_decay: 1.7231272399285946e-05
+  training:
+    epochs: 600
+    patience: 20
+    val_ratio: 0.2
+    grad_clip: 1.0
+    scheduler_factor: 0.5
+    scheduler_patience: 4
+training:
+  test_size: 0.2
+  random_state: 42
+experiment:
+  name: turbofan_rul_prediction-lstm
+paths:
+  train_data: src/data/processed/train_features.parquet
+  test_data: src/data/processed/test_features.parquet
+  optuna_output: artifacts/optuna/optuna_results.json
+  model_output: artifacts/model
+  metrics_output: artifacts/reports/metrics.json
+mlflow:
+  experiment_name: turbofan-rul-prediction
+  tracking_uri: sqlite:///mlflow.db
+optuna:
+  n_trials: 50

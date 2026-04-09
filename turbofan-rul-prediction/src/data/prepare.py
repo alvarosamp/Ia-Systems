@@ -5,7 +5,7 @@ from typing import List
 
 import pandas as pd
 
-
+from src.core.schemas import validate_raw_processed
 
 from src.core.settings import (
     TRAIN_RAW_FILE,
@@ -82,6 +82,9 @@ def main() -> None:
 
     train_df = compute_train_rul(train_df)
     test_df = compute_test_rul(test_df, rul_df)
+    
+    train_df = validate_raw_processed(train_df, name="train")
+    test_df = validate_raw_processed(test_df, name="test")
 
     train_df.to_parquet(TRAIN_PROCESSED_FILE, index=False)
     test_df.to_parquet(TEST_PROCESSED_FILE, index=False)
