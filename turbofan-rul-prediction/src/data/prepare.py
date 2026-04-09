@@ -6,7 +6,6 @@ from typing import List
 import pandas as pd
 
 from src.core.schemas import validate_raw_processed
-
 from src.core.settings import (
     TRAIN_RAW_FILE,
     TEST_RAW_FILE,
@@ -15,6 +14,12 @@ from src.core.settings import (
     TEST_PROCESSED_FILE,
     ensure_directories,
 )
+
+
+# Padrão C-MAPSS (Heimes 2008 e papers seguintes).
+# Saturar RUL em 125 evita que o modelo gaste capacidade prevendo cauda longa
+# irrelevante e foca na região onde a manutenção preditiva importa.
+RUL_CAP = 125
 
 
 def build_column_names() -> List[str]:
@@ -56,6 +61,12 @@ def compute_test_rul(test_df: pd.DataFrame, rul_df: pd.DataFrame) -> pd.DataFram
     return test_df
 
 
+def clip_rul(df: pd.DataFrame, cap: int = RUL_CAP) -> pd.DataFrame:
+    df = df.copy()
+    df["rul"] = df["rul"].clip(upper=cap)
+    return df
+
+
 def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df = df.drop_duplicates()
@@ -75,14 +86,21 @@ def main() -> None:
 
     train_df = read_cmapss_file(TRAIN_RAW_FILE)
     test_df = read_cmapss_file(TEST_RAW_FILE)
-    rul_df = pd.read_csv(RUL_RAW_FILE, sep=r"\s+", header=None, engine="python").dropna(axis=1, how="all")
+    rul_df = pd.read_csv(
+        RUL_RAW_FILE, sep=r"\s+", header=None, engine="python"
+    ).dropna(axis=1, how="all")
 
     train_df = clean_dataframe(train_df)
     test_df = clean_dataframe(test_df)
 
     train_df = compute_train_rul(train_df)
     test_df = compute_test_rul(test_df, rul_df)
-    
+
+    # RUL clipping (ANTES da validação e do save)
+    train_df = clip_rul(train_df, cap=RUL_CAP)
+    test_df = clip_rul(test_df, cap=RUL_CAP)
+
+    # Validação Pandera
     train_df = validate_raw_processed(train_df, name="train")
     test_df = validate_raw_processed(test_df, name="test")
 
@@ -90,9 +108,12 @@ def main() -> None:
     test_df.to_parquet(TEST_PROCESSED_FILE, index=False)
 
     print(f"Train salvo em: {TRAIN_PROCESSED_FILE}")
-    print(f"Test salvo em: {TEST_PROCESSED_FILE}")
+    print(f"Test salvo em:  {TEST_PROCESSED_FILE}")
     print(f"Shape train: {train_df.shape}")
-    print(f"Shape test: {test_df.shape}")
+    print(f"Shape test:  {test_df.shape}")
+    print(f"RUL cap aplicado: {RUL_CAP}")
+    print(f"Train RUL max: {train_df['rul'].max()}  (esperado: {RUL_CAP})")
+    print(f"Test  RUL max: {test_df['rul'].max()}  (esperado: {RUL_CAP})")
 
 
 if __name__ == "__main__":

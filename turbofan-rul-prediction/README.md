@@ -93,6 +93,13 @@ Raw Data → Data Preparation → Feature Engineering → Training → MLflow/Op
 	 python -m src.inference.predict
 	 ```
 
+	 Otimização (Optuna) do modelo LSTM:
+	 ```bash
+	 python -m src.dl.optimize_lstm
+	 ```
+	 **Nota:** ao usar `python -m`, não adicione o sufixo `.py` (ex.: use `src.dl.optimize_lstm`, não `src.dl.optimize_lstm.py`).
+	 Se seu `python` não estiver apontando para o venv correto, execute com o interpretador do venv explicitamente.
+
 3. **Rastreie experimentos:**
 	 ```bash
 	 mlflow ui
