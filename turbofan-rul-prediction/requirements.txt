@@ -17,3 +17,5 @@ optuna
 hydra-core
 prefect
 evidently
+httpx
+pytest-cov

@@ -11,8 +11,8 @@ params:
   weight_decay: 1.135314774985011e-06
 
 training:
-  epochs: 100
-  patience: 60
+  epochs: 500
+  patience: 120
   val_ratio: 0.2
   grad_clip: 1.0
   scheduler_factor: 0.5
