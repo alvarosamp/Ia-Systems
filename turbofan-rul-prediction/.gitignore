@@ -3,6 +3,14 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.ipynb_checkpoints/
 .env
 .env.*
 mlruns/
@@ -10,6 +18,7 @@ artifacts/
 .dvc/cache/
 data/raw/
 data/external/
+outputs/
 *.parquet
 *.csv
 *.pkl

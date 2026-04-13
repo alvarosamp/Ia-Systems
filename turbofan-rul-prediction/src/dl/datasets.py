@@ -27,7 +27,9 @@ def apply_feature_scaler(df: pd.DataFrame, scaler: StandardScaler, feature_cols:
     df_scaled[feature_cols] = scaler.transform(df[feature_cols])
     return df_scaled
 
-def create_sequences(df: pd.DataFrame, seq_len: int = 30):
+def create_sequences(df: pd.DataFrame, seq_len: int = 30, seq_length=None):
+    if seq_length is not None:
+        seq_len = seq_length
     X, y = [], []
 
     feature_cols = [c for c in df.columns if c not in DROP_COLUMNS]
