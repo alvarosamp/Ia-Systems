@@ -4,6 +4,9 @@
 fastapi
 uvicorn
 
+# Used by src/serving/inference.py
+pandas
+
 # Prefer CPU wheels for Linux containers (smaller than CUDA builds)
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch

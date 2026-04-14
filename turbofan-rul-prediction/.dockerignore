@@ -1,16 +1,52 @@
-.venv
-__pycache__
-.git
-.gitignore
-mlruns
-data
-notebooks
-outputs
-artifacts/reports
-artifacts/optuna
-mlflow.db
-.dvc
+# Python
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Testes e dev
+tests/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.ruff_cache/
+
+# Dados grandes (NÃO vão pra imagem)
+src/data/raw/
+src/data/processed/
+data/
+
+# Artefatos (exceto o modelo final que a API precisa)
+artifacts/optuna/
+artifacts/reports/
+artifacts/model/*.joblib
+
+# MLflow
+mlflow.db
+mlruns/
+
+# Notebooks e IDE
+*.ipynb
+.ipynb_checkpoints/
+.vscode/
+.idea/
+*.swp
+
+# Git e CI
+.git/
+.github/
+.gitignore
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Docs
+README.md
+*.md

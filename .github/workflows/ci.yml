@@ -1,0 +1,78 @@
+name: CI - Turbofan RUL
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'turbofan-rul-prediction/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'turbofan-rul-prediction/**'
+      - '.github/workflows/ci.yml'
+
+defaults:
+  run:
+    working-directory: turbofan-rul-prediction
+
+jobs:
+  lint-and-test:
+    name: Lint + Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: turbofan-rul-prediction/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff pytest pytest-cov httpx
+
+      - name: Lint with ruff (non-blocking)
+        run: ruff check src/ --output-format=github || true
+
+      - name: Run pytest with coverage
+        env:
+          PYTHONPATH: ${{ github.workspace }}/turbofan-rul-prediction
+        run: |
+          pytest --cov=src --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: turbofan-rul-prediction/coverage.xml
+          retention-days: 14
+
+  docker-build:
+    name: Docker build check
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: turbofan-rul-prediction
+          file: turbofan-rul-prediction/Dockerfile
+          push: false
+          tags: turbofan-rul:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: turbofan-rul-api
+    runtime: docker
+    plan: free
+    region: oregon
+    rootDir: turbofan-rul-prediction
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    branch: main
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PORT
+        value: "8000"
