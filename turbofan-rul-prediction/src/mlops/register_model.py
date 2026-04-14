@@ -28,7 +28,7 @@ def main(cfg : DictConfig):
     
     try : 
         client.create_registered_model(MODEL_NAME)
-    except Exception as e:
+    except Exception:
         print(f"Modelo '{MODEL_NAME}' já existe. Continuando...")
         pass 
     

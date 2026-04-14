@@ -19,3 +19,4 @@ prefect
 evidently
 httpx
 pytest-cov
+pandera

@@ -28,3 +28,13 @@ outputs/
 *.pth
 *.h5
 .DS_Store
+
+# Artefatos gerados (não versionar), mas manter o checkpoint leve do modelo para CI/testes
+src/artifacts/
+src/artifacts/**
+
+!artifacts/
+artifacts/*
+!artifacts/model/
+artifacts/model/*
+!artifacts/model/lstm.pth

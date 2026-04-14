@@ -12,12 +12,9 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBRegressor
 from omegaconf import DictConfig, OmegaConf
 
-from pathlib import Path
 from src.core.settings import (
     FEATURE_TRAIN_FILE,
     FEATURE_TEST_FILE,
-    BEST_MODEL_FILE,
-    METRICS_FILE,
     ensure_directories,
     DROP_COLUMNS,
 )
