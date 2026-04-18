@@ -20,3 +20,5 @@ evidently
 httpx
 pytest-cov
 pandera
+prometheus-fastapi-instrumentator>=7.0.0
+evidently>=0.4.0
