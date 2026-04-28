@@ -5,8 +5,14 @@ import time
 from fastapi import FastAPI, HTTPException
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from src.serving.schema import SequenceRequest, PredictionResponse
+from src.serving.schema import (
+    SequenceRequest,
+    PredictionResponse,
+    ExplainRequest,
+    ExplainResponse,
+)
 from src.serving.inference import predict, metadata
+from src.serving.explainer import explain_prediction
 from src.monitoring.metrics import (
     PREDICTION_COUNT,
     PREDICTION_LATENCY,
@@ -17,19 +23,18 @@ from src.monitoring.metrics import (
 
 app = FastAPI(
     title="Turbofan RUL Prediction API",
-    description="Predict Remaining Useful Life using an optimized LSTM model.",
-    version="1.0.0",
+    description=(
+        "Predict Remaining Useful Life of turbofan engines using an optimized LSTM model. "
+        "Includes explainability via Integrated Gradients."
+    ),
+    version="2.0.0",
 )
 
-# Auto-instrumenta todos os endpoints com métricas HTTP padrão
-# (request_count, request_latency, request_size, response_size)
-# Expõe /metrics pra Prometheus scrape
 Instrumentator().instrument(app).expose(app)
 
 
 @app.on_event("startup")
 def _set_model_gauge():
-    """Registra metadados do modelo como gauge no startup."""
     MODEL_INFO.labels(
         seq_len=str(metadata["seq_len"]),
         hidden_size=str(metadata["hidden_size"]),
@@ -66,7 +71,6 @@ def predict_rul(request: SequenceRequest):
     try:
         result = predict(request.sequence, normalized=request.normalized)
 
-        # Métricas custom
         elapsed = time.perf_counter() - start
         PREDICTION_LATENCY.observe(elapsed)
         PREDICTION_COUNT.labels(status="success").inc()
@@ -79,3 +83,25 @@ def predict_rul(request: SequenceRequest):
     except Exception as e:
         PREDICTION_COUNT.labels(status="error").inc()
         raise HTTPException(status_code=500, detail=f"Internal error: {e}")
+
+
+@app.post("/explain", response_model=ExplainResponse)
+def explain_rul(request: ExplainRequest):
+    """
+    Explica uma predição de RUL mostrando quais features e timesteps
+    mais influenciaram o resultado.
+
+    Usa Integrated Gradients (Captum) com baseline zero (= média do treino).
+    Retorna as top-K features com importância relativa e direção do efeito.
+    """
+    try:
+        result = explain_prediction(
+            sequence=request.sequence,
+            normalized=request.normalized,
+            top_k=request.top_k,
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Explain error: {e}")

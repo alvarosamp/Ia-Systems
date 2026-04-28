@@ -265,7 +265,29 @@ A regression test (`test_features_no_leakage.py`) now permanently guards against
 | GET | `/health` | Health check (model loaded?) |
 | GET | `/model-info` | Model architecture and config |
 | POST | `/predict` | Predict RUL from sensor sequence |
+| POST | `/explain` | Explain a prediction via Integrated Gradients |
 | GET | `/docs` | Interactive Swagger UI |
+
+### Explain request (Windows / PowerShell)
+
+PowerShell interpreta `@algo` como *splatting*, então para usar `curl.exe` com arquivo você precisa passar o `@arquivo` como string.
+
+Opção 1 (recomendado): script helper
+
+```powershell
+python scripts/make_explain_payload.py --out test_explain_payload.json --top-k 10
+curl.exe -X POST http://localhost:8000/explain -H "Content-Type: application/json" --data-binary "@test_explain_payload.json"
+
+# ou tudo em um:
+./scripts/call_explain.ps1 -Url "http://localhost:8000/explain" -TopK 10
+```
+
+Opção 2: alternativa 100% PowerShell (sem `curl.exe`)
+
+```powershell
+$body = Get-Content -Raw test_explain_payload.json
+Invoke-RestMethod -Method Post -Uri "http://localhost:8000/explain" -ContentType "application/json" -Body $body
+```
 
 ### Predict request
 

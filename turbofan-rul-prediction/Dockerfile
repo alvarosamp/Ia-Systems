@@ -24,6 +24,7 @@ RUN pip install --no-cache-dir -r requirements-api.txt
 COPY src/core ./src/core
 COPY src/dl/models.py ./src/dl/models.py
 COPY src/dl/__init__.py ./src/dl/__init__.py
+COPY src/monitoring ./src/monitoring
 COPY src/serving ./src/serving
 
 # Copia o modelo treinado

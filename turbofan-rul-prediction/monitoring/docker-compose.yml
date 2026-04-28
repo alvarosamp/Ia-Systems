@@ -21,12 +21,12 @@ services:
     image: prom/prometheus:v2.51.0
     container_name: turbofan-prometheus
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro
       - prometheus_data:/prometheus
     ports:
       - "9090:9090"
     command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--config.file=/etc/prometheus/prometheus.yaml"
       - "--storage.tsdb.retention.time=30d"
     depends_on:
       api:
