@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Process | Where-Object { $_.Name -match \"git|Code|github|vscode\" } | Select-Object Id, Name)",
+      "PowerShell(handle.exe \"C:\\\\Users\\\\vish8\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Ia-Systems\\\\.git\\\\index.lock\" 2>&1)",
+      "PowerShell($lockFile = \"C:\\\\Users\\\\vish8\\\\OneDrive\\\\Documentos\\\\GitHub\\\\Ia-Systems\\\\.git\\\\index.lock\"; $stream = [System.IO.File]::Open\\($lockFile, 'Open', 'ReadWrite', 'None'\\); $stream.Close\\(\\))",
+      "Bash(git -C \"C:/Users/vish8/OneDrive/Documentos/GitHub/Ia-Systems/F1-AI-Assistent\" add teste.py)",
+      "Bash(git -C \"C:/Users/vish8/OneDrive/Documentos/GitHub/Ia-Systems/F1-AI-Assistent\" status)"
+    ]
+  }
+}
