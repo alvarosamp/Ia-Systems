@@ -1,0 +1,20 @@
+defaults:
+  - paths: default
+  - data: 3w
+  - features: default
+  - model: xgboost           # default model — Phase 1 doesn't use it
+  - _self_
+ 
+# --- Run-level knobs ---
+seed: 42
+log_level: INFO
+ 
+# Hydra plumbing — keep multirun/output dirs out of the project tree.
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.num}
+  job:
+    chdir: false   # keep cwd at project root so relative paths still work

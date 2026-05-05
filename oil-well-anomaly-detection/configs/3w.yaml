@@ -1,0 +1,35 @@
+name: petrobras_3w
+version: "2.0.0"
+repo_url: https://github.com/petrobras/3W.git
+git_ref: main
+
+# Sensors to use as features. Order is the canonical model input order.
+sensors:
+  - P-PDG
+  - P-TPT
+  - T-TPT
+  - P-MON-CKP
+  - T-JUS-CKP
+  - P-JUS-CKGL
+  - T-JUS-CKGL
+  - QGL
+
+# Label column name in the upstream parquet files.
+label_col: class
+
+# Problem framing: Spurious Closure of DHSV.
+labels:
+  normal: 0
+  fault: 2
+  transient: 102
+
+# Folders under dataset/ to consume. Override with:
+#   python -m data.prepare data.event_dirs=[0,2,5]
+event_dirs:
+  - "0"
+  - "2"
+
+# Preparation knobs.
+prepare:
+  validate: true        # run pandera schemas
+  max_instances: null   # null = process everything

@@ -1,0 +1,38 @@
+# XGBoost — supervised baseline for DHSV anomaly detection.
+# Consumed by training/train.py (Phase 3). Phase 1 only ships this as a
+# stub so the Hydra config tree is wired end-to-end.
+
+name: xgboost
+kind: supervised
+target: binary             # see configs/features/default.yaml -> target
+
+# Hyperparameters. These are defensible starting points for an
+# imbalanced binary problem on 1 Hz multivariate sensor data; expect
+# Phase 3 to tune them.
+params:
+  n_estimators: 500
+  max_depth: 6
+  learning_rate: 0.05
+  subsample: 0.9
+  colsample_bytree: 0.8
+  min_child_weight: 5
+  reg_alpha: 0.0
+  reg_lambda: 1.0
+  objective: binary:logistic
+  eval_metric: aucpr        # PR-AUC matches the imbalanced-class problem
+  tree_method: hist
+  random_state: ${seed}
+
+# Class imbalance knobs. ``auto`` lets training/train.py compute the
+# negative/positive ratio at fit time.
+class_weight: auto
+
+# Training loop knobs.
+fit:
+  early_stopping_rounds: 50
+  verbose: false
+
+# Decision threshold. Tuned post-hoc on the validation PR curve.
+threshold:
+  strategy: f1_max          # alternatives: precision_at_recall, fixed
+  fixed_value: null

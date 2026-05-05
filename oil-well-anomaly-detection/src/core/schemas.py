@@ -14,11 +14,10 @@ column is 'int64' and may also be NaN and the index is a monotonically incresing
 """
 
 from __future__ import annotations
-from distro import name
 import pandas as pd
-import pandera.pandas as pa
+import pandera as pa
 from pandera.engines.pandas_engine import Datetime
-from core.settings import TARGET_LABELS, EVENT_DIRS_FOR_DHSV, SENSORS
+from core.settings import TARGET_LABELS, EVENT_DIRS_FOR_DHSV, SENSORS, LABEL_COL
 from pathlib import Path
 
 #Helpers

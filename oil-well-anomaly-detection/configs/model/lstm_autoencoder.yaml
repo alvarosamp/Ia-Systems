@@ -1,0 +1,37 @@
+# LSTM-Autoencoder — unsupervised anomaly detection.
+# Consumed by dl/train_autoencoder.py (Phase 3). Trained on
+# normal-only data; reconstruction error is the anomaly score.
+
+name: lstm_autoencoder
+kind: unsupervised
+target: reconstruction      # not a class label — model regresses on inputs
+
+# Architecture.
+arch:
+  hidden_size: 64
+  num_layers: 2
+  bottleneck_size: 16
+  dropout: 0.1
+  bidirectional: false
+
+# Sequence framing. The window length here typically matches
+# ``features.window.size`` so feature engineering and DL share framing.
+sequence:
+  length: ${features.window.size}
+  stride: ${features.window.stride}
+
+# Training loop.
+training:
+  epochs: 50
+  batch_size: 256
+  lr: 1.0e-3
+  weight_decay: 1.0e-5
+  optimizer: adam
+  scheduler: cosine
+  patience: 10              # early stopping on val reconstruction loss
+  grad_clip: 1.0
+
+# Anomaly-score thresholding (set on validation, applied at inference).
+threshold:
+  strategy: percentile      # alternatives: iqr, gaussian_zscore
+  percentile: 99.0

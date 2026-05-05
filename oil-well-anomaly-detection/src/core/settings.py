@@ -36,6 +36,9 @@ SENSORS : Final[tuple[str, ...]] = (
 #Name of the target label column in the dataframes
 TARGET_LABEL: Final[str] = "class"
 
+# Backwards/compat alias used across the codebase.
+LABEL_COL: Final[str] = TARGET_LABEL
+
 #Project focues : Spurius Closure of DHSV (Downhole Safety valve)
 # 0 : normal steady-state operation -> Indica operação normal, poço sem anomalias
 # 2 : DHSV closure event(anomaly, steady-state) -> Indiica evento de fechamento, ou seja, anomalia detectada(estado estavel, porem anomalo)
